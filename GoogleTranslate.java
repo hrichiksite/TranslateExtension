@@ -5,16 +5,36 @@
 
 package com.kode.googletranslate;
 
-import com.google.appinventor.*;
+import android.app.Activity;
 
+import android.text.TextUtils;
 
-import java.io.BufferedReader;
+import com.google.appinventor.components.annotations.*;
+import com.google.appinventor.components.runtime.*;
+import com.google.appinventor.components.common.*;
+
+import com.google.appinventor.components.annotations.DesignerComponent;
+import com.google.appinventor.components.annotations.DesignerProperty;
+import com.google.appinventor.components.annotations.SimpleEvent;
+import com.google.appinventor.components.annotations.SimpleFunction;
+import com.google.appinventor.components.annotations.SimpleObject;
+import com.google.appinventor.components.annotations.SimpleProperty;
+import com.google.appinventor.components.annotations.UsesPermissions;
+
+import com.google.appinventor.components.common.ComponentCategory;
+import com.google.appinventor.components.common.PropertyTypeConstants;
+
+import com.google.appinventor.components.runtime.util.AsynchUtil;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 @DesignerComponent(
     description = "Non-visible Extension that provides functions for Getting Translation From Google Translate API.<br><a href="https://github.com/hrichiksite/TranslateExtension">Source Code</a>",
@@ -29,41 +49,32 @@ public class GoogleTranslate extends AndroidNonvisibleComponent{
     public static final String TRANSLATE_URL =
         "https://translate.googleapis.com/translate_a/single?client=gtx&sl=";
     private String serviceUrl = TRANSLATE_URL;
-    
-
-
-    }
-
-        private ComponentContainer container;
-        /**
-         * @param container container, component will be placed in
-         */
-        public GoogleTranslate(ComponentContainer container) {
-            super(container.$form());
-            this.container = container;
         }
-      
+
+
         @SimpleFunction(description = "Translates The Given Text To The Given Language")
         public void StoreValue(final String CurrentLang, final String TranslateLang, final String Text) {
+
             serviceUrl = serviceUrl+CurrentLang+&tl+TranslateLang+&dt=t&q=+encode(Text);
-            URL obj = new URL(serviceUrl);
-            HttpURLConnection con = (HttpURLConnection)
-            obj.openConnection();
-            con.setRequestMethod("GET");
-            int responseCode = con.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) { 
-                // success
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                con.getInputStream()));
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-    
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-                in.close();
-                return response.toString()
-        } else {
-            return Error
+            final String finalURL = serviceUrl +
+            CurrentLang + "&tl" + TranslateLang + "&dt=t&q=" +
+            "&text=" + URLEncoder.encode(Text, "UTF-8");
+
+            URL url = new URL(finalURL);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            if (connection != null) {
+              try {
+                final String responseContent = getResponseContent(connection);
+          
+                return responseContent;
+              };
+          
+              } finally {
+                connection.disconnect();
+              }
         }
-    }
+        
+
+
+
+    
